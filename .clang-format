@@ -6,5 +6,7 @@ AllowShortIfStatementsOnASingleLine: false
 AllowShortLambdasOnASingleLine: Empty
 DerivePointerAlignment: false
 PointerAlignment: Left
-SortIncludes: false
+SortIncludes: CaseSensitive
+IncludeBlocks: Preserve
+
 
