@@ -1,9 +1,30 @@
 #include <lex/lexer.hpp>
 
 // Finally,
+#include <fmt/core.h>
+#include <fmt/ostream.h>
 #include <catch2/catch.hpp>
 
-#include <iostream>
+TEST_CASE("ExampleErrors", "[lex]") {
+  std::stringstream source("? + mama /= forward ''7 \"dsb");
+  lex::Lexer l{source};
+
+  CHECK(l.Matches(lex::TokenType::INVALID));
+  CHECK(l.Matches(lex::TokenType::PLUS));
+  CHECK(l.Matches(lex::TokenType::IDENTIFIER));
+  CHECK(l.Matches(lex::TokenType::DIV));
+  CHECK(l.Matches(lex::TokenType::ASSIGN));
+  CHECK(l.Matches(lex::TokenType::IDENTIFIER));
+  CHECK(l.Matches(lex::TokenType::INVALID));
+  CHECK(l.Matches(lex::TokenType::INVALID));
+  CHECK(l.Matches(lex::TokenType::INVALID));
+  CHECK(l.Matches(lex::TokenType::TOKEN_EOF));
+
+  CHECK(l.Errors().size() == 4);
+  for (size_t i = 0; i < l.Errors().size(); ++i) {
+    fmt::print("{}\n", l.Errors()[i]);
+  }
+}
 
 //////////////////////////////////////////////////////////////////////
 
@@ -14,6 +35,7 @@ TEST_CASE("Lexer: Just works", "[lex]") {
   CHECK(l.Matches(lex::TokenType::NUMBER));
   CHECK(l.Matches(lex::TokenType::PLUS));
   CHECK(l.Matches(lex::TokenType::NUMBER));
+  CHECK(l.Matches(lex::TokenType::TOKEN_EOF));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -24,9 +46,9 @@ TEST_CASE("Braces", "[lex]") {
 
   CHECK(l.Matches(lex::TokenType::NUMBER));
   CHECK(l.Matches(lex::TokenType::PLUS));
-  CHECK(l.Matches(lex::TokenType::LEFT_BRACE));
+  CHECK(l.Matches(lex::TokenType::LEFT_PAREN));
   CHECK(l.Matches(lex::TokenType::NUMBER));
-  CHECK(l.Matches(lex::TokenType::RIGHT_BRACE));
+  CHECK(l.Matches(lex::TokenType::RIGHT_PAREN));
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -81,7 +103,7 @@ TEST_CASE("Statement", "[lex]") {
   CHECK(l.Matches(lex::TokenType::IDENTIFIER));
   CHECK(l.Matches(lex::TokenType::ASSIGN));
   CHECK(l.Matches(lex::TokenType::NUMBER));
-  CHECK(l.Matches(lex::TokenType::SEMICOLUMN));
+  CHECK(l.Matches(lex::TokenType::SEMICOLON));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -99,11 +121,11 @@ TEST_CASE("Funtion declaration args", "[lex]") {
   std::stringstream source("(a1, a2)");
   lex::Lexer l{source};
 
-  CHECK(l.Matches(lex::TokenType::LEFT_BRACE));
+  CHECK(l.Matches(lex::TokenType::LEFT_PAREN));
   CHECK(l.Matches(lex::TokenType::IDENTIFIER));
   CHECK(l.Matches(lex::TokenType::COMMA));
   CHECK(l.Matches(lex::TokenType::IDENTIFIER));
-  CHECK(l.Matches(lex::TokenType::RIGHT_BRACE));
+  CHECK(l.Matches(lex::TokenType::RIGHT_PAREN));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -112,8 +134,8 @@ TEST_CASE("Curly", "[lex]") {
   std::stringstream source("{ }");
   lex::Lexer l{source};
 
-  CHECK(l.Matches(lex::TokenType::LEFT_CBRACE));
-  CHECK(l.Matches(lex::TokenType::RIGHT_CBRACE));
+  CHECK(l.Matches(lex::TokenType::LEFT_BRACE));
+  CHECK(l.Matches(lex::TokenType::RIGHT_BRACE));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -133,7 +155,7 @@ TEST_CASE("Lex types", "[lex]") {
   std::stringstream source(": Int Bool String Unit");
   lex::Lexer l{source};
 
-  CHECK(l.Matches(lex::TokenType::COLUMN));
+  CHECK(l.Matches(lex::TokenType::COLON));
 
   CHECK(l.Matches(lex::TokenType::TY_INT));
   CHECK(l.Matches(lex::TokenType::TY_BOOL));

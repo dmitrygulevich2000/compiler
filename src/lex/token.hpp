@@ -2,15 +2,18 @@
 
 #include <lex/scanner.hpp>
 
-#include <variant>
 #include <cstddef>
+#include <variant>
 
 namespace lex {
 
 //////////////////////////////////////////////////////////////////////
 
 struct Token {
-    // Your code goes here
+  TokenType type;
+  // TODO consider different types for semantic info
+  std::string value;
+  Location location;
 };
 
 //////////////////////////////////////////////////////////////////////

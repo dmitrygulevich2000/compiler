@@ -1,5 +1,6 @@
 #pragma once
 
+#include <lex/error.hpp>
 #include <lex/ident_table.hpp>
 #include <lex/token.hpp>
 
@@ -25,6 +26,9 @@ class Lexer {
   // Check current token type and maybe consume it.
   bool Matches(lex::TokenType type);
 
+  const std::vector<Error>& Errors() const;
+  size_t RecentErrorsCount() const;
+
  private:
   void SkipWhitespace();
 
@@ -32,19 +36,31 @@ class Lexer {
 
   ////////////////////////////////////////////////////////////////////
 
-  std::optional<Token> MatchOperators();
+  void AddError(const Location& loc, const std::string& message);
 
-  std::optional<TokenType> MatchOperator();
+  Token InvalidHere() {
+    return Token{TokenType::INVALID, "", scanner_.GetLocation()};
+  }
 
   ////////////////////////////////////////////////////////////////////
 
-  std::optional<Token> MatchLiterls();
+  Token MustMatchOperators();
 
-  std::optional<Token> MatchNumericLiteral();
+  TokenType MustMatchOperator();
 
-  std::optional<Token> MatchStringLiteral();
+  TokenType MatchEQ(TokenType matched, TokenType single);
 
-  std::optional<Token> MatchCharLiteral();
+  ////////////////////////////////////////////////////////////////////
+
+  std::optional<Token> MatchLiterals();
+
+  Token MustMatchNumericLiteral();
+
+  Token MustMatchStringLiteral();
+
+  Token MustMatchCharLiteral();
+
+  ////////////////////////////////////////////////////////////////////
 
   std::optional<Token> MatchWords();
 
@@ -56,6 +72,9 @@ class Lexer {
 
   // Current token
   Token peek_{};
+
+  std::vector<Error> errors_;
+  size_t recent_errors_count_;
 
   Scanner scanner_;
   IdentTable table_;
