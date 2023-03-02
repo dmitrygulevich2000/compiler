@@ -15,7 +15,7 @@ class TreeNode {
   virtual ~TreeNode() = default;
 
   template <typename T>
-  T* as() {
+  T* As() {
     return dynamic_cast<T*>(this);
   }
 };

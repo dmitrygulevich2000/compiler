@@ -13,53 +13,53 @@ class Parser {
 
   ///////////////////////////////////////////////////////////////////
 
-  Statement* ParseStatement();
+  Stmt* ParseStmt();
 
-  Statement* ParseExprStatement();
-  AssignmentStatement* ParseAssignment(LvalueExpression* target);
-
-  ////////////////////////////////////////////////////////////////////
-
-  Declaration* ParseDeclaration();
-
-  Declaration* ParsePrototype();
-  FunDeclStatement* ParseFunPrototype();
-  FunDeclStatement* ParseFunDeclStatement();
-  VarDeclStatement* ParseVarDeclStatement();
-  FunDeclStatement* ParseFunDeclarationStandalone();
+  Stmt* ParseExprStmt();
+  AssignmentStmt* ParseAssignment(LvalueExpr* target);
 
   ////////////////////////////////////////////////////////////////////
 
-  Expression* ParseExpression();
+  Decl* ParseDecl();
 
-  Expression* ParseKeywordExpresssion();
+  Decl* ParsePrototype();
+  FunDecl* ParseFunPrototype();
+  FunDecl* ParseFunDecl();
+  VarDecl* ParseVarDecl();
+  FunDecl* ParseFunDeclStandalone();
 
-  Expression* ParseReturnStatement();
-  Expression* ParseYieldStatement();
-  Expression* ParseIfExpression();
-  Expression* ParseMatchExpression();
-  Expression* ParseNewExpression();
+  ////////////////////////////////////////////////////////////////////
 
-  Expression* ParseBlockExpression();
+  Expr* ParseExpr();
 
-  Expression* ParseComparison();
-  Expression* ParseBinary();
+  Expr* ParseKeywordExpresssion();
 
-  Expression* ParseUnary();
-  Expression* ParseDeref();
-  Expression* ParseAddressof();
+  Expr* ParseReturnStmt();
+  Expr* ParseYieldStmt();
+  Expr* ParseIfExpr();
+  Expr* ParseMatchExpr();
+  Expr* ParseNewExpr();
+
+  Expr* ParseBlockExpr();
+
+  Expr* ParseComparison();
+  Expr* ParseBinary();
+
+  Expr* ParseUnary();
+  Expr* ParseDeref();
+  Expr* ParseAddressof();
 
   // Precedence 1
-  Expression* ParsePostfixExpressions();
-  Expression* ParseFieldAccess(Expression* expr);
-  Expression* ParseIndirectFieldAccess(Expression* expr);
-  Expression* ParseIndexingExpression(Expression* expr);
-  Expression* ParseFnCallUnnamed(Expression* expr);
-  Expression* ParseFnCallExpression(Expression* expr, lex::Token id);
+  Expr* ParsePostfixExprs();
+  Expr* ParseFieldAccess(Expr* expr);
+  Expr* ParseIndirectFieldAccess(Expr* expr);
+  Expr* ParseIndexingExpr(Expr* expr);
+  Expr* ParseFnCallUnnamed(Expr* expr);
+  Expr* ParseFnCallExpr(Expr* expr, lex::Token id);
 
-  Expression* ParseCompoundInitializer(lex::Token id);
-  Expression* ParseSignleFieldCompound();
-  Expression* ParsePrimary();
+  Expr* ParseCompoundInitializer(lex::Token id);
+  Expr* ParseSignleFieldCompound();
+  Expr* ParsePrimary();
 
   ////////////////////////////////////////////////////////////////////
 
@@ -68,7 +68,7 @@ class Parser {
  private:
   std::string FormatLocation();
 
-  auto ParseCSV() -> std::vector<Expression*>;
+  auto ParseCSV() -> std::vector<Expr*>;
   auto ParseFormals() -> std::vector<lex::Token>;
 
   bool Matches(lex::TokenType type);

@@ -3,30 +3,30 @@
 
 ////////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseExpression() {
+Expr* Parser::ParseExpr() {
   return ParseComparison();
 }
 
 ///////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseKeywordExpresssion() {
-  if (auto return_statement = ParseReturnStatement()) {
+Expr* Parser::ParseKeywordExpresssion() {
+  if (auto return_statement = ParseReturnStmt()) {
     return return_statement;
   }
 
-  if (auto yield_statement = ParseYieldStatement()) {
+  if (auto yield_statement = ParseYieldStmt()) {
     return yield_statement;
   }
 
-  if (auto if_expr = ParseIfExpression()) {
+  if (auto if_expr = ParseIfExpr()) {
     return if_expr;
   }
 
-  if (auto match_expr = ParseMatchExpression()) {
+  if (auto match_expr = ParseMatchExpr()) {
     return match_expr;
   }
 
-  if (auto new_expr = ParseNewExpression()) {
+  if (auto new_expr = ParseNewExpr()) {
     return new_expr;
   }
 
@@ -35,96 +35,96 @@ Expression* Parser::ParseKeywordExpresssion() {
 
 ///////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseDeref() {
+Expr* Parser::ParseDeref() {
   std::abort();
 }
 
 ///////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseAddressof() {
+Expr* Parser::ParseAddressof() {
   std::abort();
 }
 
 ///////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseIfExpression() {
+Expr* Parser::ParseIfExpr() {
   std::abort();  // Your code goes here
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseMatchExpression() {
+Expr* Parser::ParseMatchExpr() {
   std::abort();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseNewExpression() {
+Expr* Parser::ParseNewExpr() {
   std::abort();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseBlockExpression() {
+Expr* Parser::ParseBlockExpr() {
   std::abort();  // Your code goes here
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseComparison() {
+Expr* Parser::ParseComparison() {
   std::abort();  // Your code goes here
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseBinary() {
+Expr* Parser::ParseBinary() {
   std::abort();  // Your code goes here
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseUnary() {
+Expr* Parser::ParseUnary() {
   std::abort();  // Your code goes here
 }
 
 ///////////////////////////////////////////////////////////////////
 
 // Assume lex::TokenType::ARROW has already been parsed
-Expression* Parser::ParseIndirectFieldAccess(Expression* expr) {
+Expr* Parser::ParseIndirectFieldAccess(Expr* expr) {
 }
 
 ///////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseFieldAccess(Expression* expr) {
+Expr* Parser::ParseFieldAccess(Expr* expr) {
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseIndexingExpression(Expression* expr) {
+Expr* Parser::ParseIndexingExpr(Expr* expr) {
   std::abort();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseFnCallExpression(Expression* expr, lex::Token id) {
+Expr* Parser::ParseFnCallExpr(Expr* expr, lex::Token id) {
   std::abort();  // Your code goes here
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseFnCallUnnamed(Expression* expr) {
+Expr* Parser::ParseFnCallUnnamed(Expr* expr) {
   std::abort();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParsePostfixExpressions() {
+Expr* Parser::ParsePostfixExprs() {
   std::abort();  // Your code goes here
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParsePrimary() {
+Expr* Parser::ParsePrimary() {
   // Try parsing grouping first
 
   // > Your code goes here
@@ -143,25 +143,25 @@ Expression* Parser::ParsePrimary() {
 ////////////////////////////////////////////////////////////////////
 
 // var t = {.field = 3, .bar = true,};
-Expression* Parser::ParseCompoundInitializer(lex::Token curly) {
+Expr* Parser::ParseCompoundInitializer(lex::Token curly) {
   std::abort();
 }
 
 // Short-hand notation: .<Tag> <Expr>
 // e.g: `.some 5` which is the same as `{ .some = 5 }`
-Expression* Parser::ParseSignleFieldCompound() {
+Expr* Parser::ParseSignleFieldCompound() {
   std::abort();
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseReturnStatement() {
+Expr* Parser::ParseReturnStmt() {
   std::abort();
 }
 
 ///////////////////////////////////////////////////////////////////
 
-Expression* Parser::ParseYieldStatement() {
+Expr* Parser::ParseYieldStmt() {
   std::abort();
 }
 

@@ -21,7 +21,7 @@ class IdentTable {
   TokenType LookupWord(const std::string_view word) {
     auto tok = map_.find(word);
     if (tok == map_.end()) {
-      return TokenType::IDENTIFIER;
+      return TokenType::IDENT;
     }
     return tok->second;
   }

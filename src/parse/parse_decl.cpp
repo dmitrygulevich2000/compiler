@@ -3,17 +3,17 @@
 
 ///////////////////////////////////////////////////////////////////
 
-FunDeclStatement* Parser::ParseFunDeclarationStandalone() {
+FunDecl* Parser::ParseFunDeclStandalone() {
 }
 
 ///////////////////////////////////////////////////////////////////
 
-Declaration* Parser::ParseDeclaration() {
-  if (auto var_declaration = ParseVarDeclStatement()) {
+Decl* Parser::ParseDecl() {
+  if (auto var_declaration = ParseVarDecl()) {
     return var_declaration;
   }
 
-  if (auto fun_declaration = ParseFunDeclStatement()) {
+  if (auto fun_declaration = ParseFunDecl()) {
     return fun_declaration;
   }
 
@@ -22,7 +22,7 @@ Declaration* Parser::ParseDeclaration() {
 
 ///////////////////////////////////////////////////////////////////
 
-FunDeclStatement* Parser::ParseFunDeclStatement() {
+FunDecl* Parser::ParseFunDecl() {
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -32,7 +32,7 @@ auto Parser::ParseFormals() -> std::vector<lex::Token> {
 
 ///////////////////////////////////////////////////////////////////
 
-VarDeclStatement* Parser::ParseVarDeclStatement() {
+VarDecl* Parser::ParseVarDecl() {
 }
 
 ///////////////////////////////////////////////////////////////////

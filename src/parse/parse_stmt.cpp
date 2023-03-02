@@ -3,7 +3,7 @@
 
 ///////////////////////////////////////////////////////////////////
 
-Statement* Parser::ParseStatement() {
+Stmt* Parser::ParseStmt() {
   // Your code goes here
 
   return nullptr;

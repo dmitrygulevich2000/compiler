@@ -229,18 +229,17 @@ Token Lexer::MustMatchCharLiteral() {
     return InvalidHere();
   }
 
-  char result = scanner_.Peek();
+  char result = scanner_.GetSymbol();
   if (result == '\'') {
     AddError(loc, "empty char literal");
     return InvalidHere();
   }
-  scanner_.GetSymbol();  // skip char value
 
   if (!scanner_.Match('\'')) {  // skip right '
     AddError(loc, "missing closing quote(')");
     return InvalidHere();
   }
-  return {TokenType::CHAR, {result}, loc};
+  return {TokenType::CHAR, result, loc};
 }
 
 ////////////////////////////////////////////////////////////////////

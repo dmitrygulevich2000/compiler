@@ -7,7 +7,7 @@ namespace lex {
 
 //////////////////////////////////////////////////////////////////////
 
-enum class TokenType {
+enum TokenType {
   // Your code goes here
 
   UNDEFINED,
@@ -45,19 +45,19 @@ enum class TokenType {
   PIPE,         // |
 
   // keywords
-  IDENTIFIER,  // main, x
-  TRUE,        // true
-  FALSE,       // false
-  FUN,         // fun
-  VAR,         // var
-  IF,          // if
-  ELSE,        // else
-  FOR,         // for
-  RETURN,      // return
-  YIELD,       // yield
-  STRUCT,      // struct
-  MATCH,       // match
-  EXPORTS,     // exports
+  IDENT,    // main, x
+  TRUE,     // true
+  FALSE,    // false
+  FUN,      // fun
+  VAR,      // var
+  IF,       // if
+  ELSE,     // else
+  FOR,      // for
+  RETURN,   // return
+  YIELD,    // yield
+  STRUCT,   // struct
+  MATCH,    // match
+  EXPORTS,  // exports
 
   // built-in types
   TY_INT,     // Int

@@ -58,7 +58,7 @@ std::string FormatTokenType(TokenType tt) {
       return ":";
     case TokenType::PIPE:
       return "|";
-    case TokenType::IDENTIFIER:
+    case TokenType::IDENT:
       return "IDENT";
     case TokenType::TRUE:
       return "true";

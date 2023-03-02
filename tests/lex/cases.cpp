@@ -11,16 +11,16 @@ TEST_CASE("ExampleErrors", "[lex]") {
 
   CHECK(l.Matches(lex::TokenType::INVALID));
   CHECK(l.Matches(lex::TokenType::PLUS));
-  CHECK(l.Matches(lex::TokenType::IDENTIFIER));
+  CHECK(l.Matches(lex::TokenType::IDENT));
   CHECK(l.Matches(lex::TokenType::DIV));
   CHECK(l.Matches(lex::TokenType::ASSIGN));
-  CHECK(l.Matches(lex::TokenType::IDENTIFIER));
+  CHECK(l.Matches(lex::TokenType::IDENT));
   CHECK(l.Matches(lex::TokenType::INVALID));
-  CHECK(l.Matches(lex::TokenType::INVALID));
+  CHECK(l.Matches(lex::TokenType::NUMBER));
   CHECK(l.Matches(lex::TokenType::INVALID));
   CHECK(l.Matches(lex::TokenType::TOKEN_EOF));
 
-  CHECK(l.Errors().size() == 4);
+  CHECK(l.Errors().size() == 3);
   for (size_t i = 0; i < l.Errors().size(); ++i) {
     fmt::print("{}\n", l.Errors()[i]);
   }
@@ -100,7 +100,7 @@ TEST_CASE("Statement", "[lex]") {
   lex::Lexer l{source};
 
   CHECK(l.Matches(lex::TokenType::VAR));
-  CHECK(l.Matches(lex::TokenType::IDENTIFIER));
+  CHECK(l.Matches(lex::TokenType::IDENT));
   CHECK(l.Matches(lex::TokenType::ASSIGN));
   CHECK(l.Matches(lex::TokenType::NUMBER));
   CHECK(l.Matches(lex::TokenType::SEMICOLON));
@@ -122,9 +122,9 @@ TEST_CASE("Funtion declaration args", "[lex]") {
   lex::Lexer l{source};
 
   CHECK(l.Matches(lex::TokenType::LEFT_PAREN));
-  CHECK(l.Matches(lex::TokenType::IDENTIFIER));
+  CHECK(l.Matches(lex::TokenType::IDENT));
   CHECK(l.Matches(lex::TokenType::COMMA));
-  CHECK(l.Matches(lex::TokenType::IDENTIFIER));
+  CHECK(l.Matches(lex::TokenType::IDENT));
   CHECK(l.Matches(lex::TokenType::RIGHT_PAREN));
 }
 
