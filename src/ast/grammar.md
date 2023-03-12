@@ -16,13 +16,14 @@
 //!                             Statements
 ////////////////////////////////////////////////////////////////////////////////////
 
-<statement> ::= <declaration> 
+<statement> ::= <expression>
+              | <declaration> 
               | <expression-statement>
               | <assignment-statement>
 
 <expression-statement> ::= <expression> ;
 
-<assignment-statement> ::= <unary-expression> = <expression>
+<assignment-statement> ::= <unary-expression> = <expression> ;
 
 ////////////////////////////////////////////////////////////////////////////////////
 //!                             Expressions
@@ -91,8 +92,8 @@
 <if-expression> ::= if <variable-declaration>? <expression> then? <expression> {else <expression>}?
 
 <block-expression> ::= { <statement>* <expression>? }
-      
-<return-expression> ::= return <expression>
+
+<return-expression> ::= return <expression> ;?
 
 ////////////////////////////////////////////////////////////////////////////////////
 ```

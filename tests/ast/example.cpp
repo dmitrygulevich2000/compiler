@@ -40,7 +40,7 @@ int main() {
 
   std::cout << "------" << std::endl;
   auto condition = new EqualityExpr(
-      {lex::EQUALS},
+      {lex::EQ},
       new VarAccessExpr({lex::IDENT, "ans"}),
       new UnaryExpr(
           {lex::MINUS},
@@ -69,7 +69,7 @@ int main() {
                       )
                   ),
               new EqualityExpr(
-                  {lex::EQUALS},
+                  {lex::EQ},
                   new VarAccessExpr({lex::IDENT, "answer"}),
                   new VarAccessExpr({lex::IDENT, "true_ans"})
                   ),
