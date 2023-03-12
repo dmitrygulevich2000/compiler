@@ -8,22 +8,27 @@
 TEST_CASE("ExampleErrors", "[lex]") {
   std::stringstream source("? + mama /= forward ''7 \"dsb");
   lex::Lexer l{source};
+  lex::Token tok;
 
-  CHECK(l.Matches(lex::TokenType::INVALID));
+  tok = l.GetNextToken();
+  CHECK(tok.type == lex::INVALID);
+  std::cerr << tok.Value<LexError>() << std::endl;
+
   CHECK(l.Matches(lex::TokenType::PLUS));
   CHECK(l.Matches(lex::TokenType::IDENT));
   CHECK(l.Matches(lex::TokenType::DIV));
   CHECK(l.Matches(lex::TokenType::ASSIGN));
   CHECK(l.Matches(lex::TokenType::IDENT));
-  CHECK(l.Matches(lex::TokenType::INVALID));
-  CHECK(l.Matches(lex::TokenType::NUMBER));
-  CHECK(l.Matches(lex::TokenType::INVALID));
-  CHECK(l.Matches(lex::TokenType::TOKEN_EOF));
+  tok = l.GetNextToken();
+  CHECK(tok.type == lex::INVALID);
+  std::cerr << tok.Value<LexError>() << std::endl;
 
-  CHECK(l.Errors().size() == 3);
-  for (size_t i = 0; i < l.Errors().size(); ++i) {
-    fmt::print("{}\n", l.Errors()[i]);
-  }
+  CHECK(l.Matches(lex::TokenType::NUMBER));
+  tok = l.GetNextToken();
+  CHECK(tok.type == lex::INVALID);
+  std::cerr << tok.Value<LexError>() << std::endl;
+
+  CHECK(l.Matches(lex::TokenType::TOKEN_EOF));
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -144,9 +149,9 @@ TEST_CASE("Assign vs Equals", "[lex]") {
   std::stringstream source("== = ==");
   lex::Lexer l{source};
 
-  CHECK(l.Matches(lex::TokenType::EQUALS));
+  CHECK(l.Matches(lex::TokenType::EQ));
   CHECK(l.Matches(lex::TokenType::ASSIGN));
-  CHECK(l.Matches(lex::TokenType::EQUALS));
+  CHECK(l.Matches(lex::TokenType::EQ));
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -24,9 +24,11 @@ std::string FormatTokenType(TokenType tt) {
       return "*";
     case TokenType::DIV:
       return "/";
+    case TokenType::REM:
+      return "%";
     case TokenType::ASSIGN:
       return "=";
-    case TokenType::EQUALS:
+    case TokenType::EQ:
       return "==";
     case TokenType::NOT_EQ:
       return "!=";
@@ -34,8 +36,12 @@ std::string FormatTokenType(TokenType tt) {
       return "!";
     case TokenType::LT:
       return "<";
+    case TokenType::LEQ:
+      return "<=";
     case TokenType::GT:
       return ">";
+    case TokenType::GEQ:
+      return ">=";
     case TokenType::LEFT_PAREN:
       return "(";
     case TokenType::RIGHT_PAREN:
@@ -70,6 +76,8 @@ std::string FormatTokenType(TokenType tt) {
       return "var";
     case TokenType::IF:
       return "if";
+    case TokenType::THEN:
+      return "then";
     case TokenType::ELSE:
       return "else";
     case TokenType::FOR:

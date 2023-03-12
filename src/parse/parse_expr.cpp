@@ -1,168 +1,217 @@
+#include <lex/token_type.hpp>
+#include <parse/error.hpp>
 #include <parse/parser.hpp>
-#include <parse/parse_error.hpp>
 
-////////////////////////////////////////////////////////////////////
+// TODO handle INVALID tokens & EOF errors
 
 Expr* Parser::ParseExpr() {
-  return ParseComparison();
+  return ParseEqualityExpr();
 }
 
-///////////////////////////////////////////////////////////////////
+Expr* Parser::ParseEqualityExpr() {
+  Expr* lhs = ParseComparisonExpr();
 
-Expr* Parser::ParseKeywordExpresssion() {
-  if (auto return_statement = ParseReturnStmt()) {
-    return return_statement;
+  while (lexer_.Matches(lex::EQ) || lexer_.Matches(lex::NOT_EQ)) {
+    lex::Token op = lexer_.GetPreviousToken();
+    Expr* rhs = ParseComparisonExpr();
+    if (!rhs) {
+      // TODO: error
+    }
+    lhs = new EqualityExpr(op, lhs, rhs);
   }
 
-  if (auto yield_statement = ParseYieldStmt()) {
-    return yield_statement;
+  return lhs;
+}
+Expr* Parser::ParseComparisonExpr() {
+  Expr* lhs = ParseAdditiveExpr();
+
+  while (lexer_.Matches(lex::LT) || lexer_.Matches(lex::LEQ) ||
+         lexer_.Matches(lex::GT) || lexer_.Matches(lex::GEQ)) {
+    lex::Token op = lexer_.GetPreviousToken();
+    Expr* rhs = ParseAdditiveExpr();
+    if (!rhs) {
+      // TODO: error
+    }
+    lhs = new ComparisonExpr(op, lhs, rhs);
   }
 
-  if (auto if_expr = ParseIfExpr()) {
-    return if_expr;
+  return lhs;
+}
+Expr* Parser::ParseAdditiveExpr() {
+  Expr* lhs = ParseMultiplicativeExpr();
+
+  while (lexer_.Matches(lex::PLUS) || lexer_.Matches(lex::MINUS)) {
+    lex::Token op = lexer_.GetPreviousToken();
+    Expr* rhs = ParseMultiplicativeExpr();
+    if (!rhs) {
+      // TODO: error
+    }
+    lhs = new AdditiveExpr(op, lhs, rhs);
   }
 
-  if (auto match_expr = ParseMatchExpr()) {
-    return match_expr;
+  return lhs;
+}
+Expr* Parser::ParseMultiplicativeExpr() {
+  Expr* lhs = ParseUnaryExpr();
+
+  while (lexer_.Matches(lex::STAR) || lexer_.Matches(lex::DIV) ||
+         lexer_.Matches(lex::REM)) {
+    lex::Token op = lexer_.GetPreviousToken();
+    Expr* rhs = ParseUnaryExpr();
+    if (!rhs) {
+      // TODO: error
+    }
+    lhs = new MultiplicativeExpr(op, lhs, rhs);
   }
 
-  if (auto new_expr = ParseNewExpr()) {
-    return new_expr;
+  return lhs;
+}
+Expr* Parser::ParseUnaryExpr() {
+  if (lexer_.Matches(lex::MINUS) || lexer_.Matches(lex::NOT)) {
+    lex::Token op = lexer_.GetPreviousToken();
+    Expr* operand = ParseUnaryExpr();
+    if (!operand) {
+      // TODO: error
+    }
+    return new UnaryExpr(op, operand);
+  }
+
+  if (Expr* postfix = ParsePostfixExpr()) {
+    return postfix;
+  }
+
+  if (Expr* keyword = ParseKeywordExpr()) {
+    return keyword;
   }
 
   return nullptr;
 }
 
-///////////////////////////////////////////////////////////////////
+Expr* Parser::ParsePostfixExpr() {
+  Expr* prefix = ParsePrimaryExpr();
 
-Expr* Parser::ParseDeref() {
-  std::abort();
+  while (lexer_.Matches(lex::LEFT_PAREN) || lexer_.Matches(lex::DOT)) {
+    // ParseFnCallExpr
+    if (lexer_.GetPreviousToken().type == lex::LEFT_PAREN) {
+      auto args = ParseCSV();
+      // TODO error?
+      prefix = new FnCallExpr(prefix, args);
+    }
+    // ParseFieldAccessExpr
+    if (lexer_.GetPreviousToken().type == lex::DOT) {
+      auto field = lexer_.GetNextToken();
+      // TODO ensure field is ident
+      prefix = new FieldAccessExpr(prefix, field);
+    }
+  }
+  return prefix;
 }
 
-///////////////////////////////////////////////////////////////////
+Expr* Parser::ParsePrimaryExpr() {
+  if (Expr* lit = ParseLiteralExpr()) {
+    return lit;
+  }
+  if (Expr* var = ParseVarAccessExpr()) {
+    return var;
+  }
+  if (lexer_.Matches(lex::LEFT_PAREN)) {
+    Expr* expr = ParseExpr();
+    // TODO error?
+    lexer_.Advance();  // TODO ensure here is RIGHT_PAREN
+    return expr;
+  }
 
-Expr* Parser::ParseAddressof() {
-  std::abort();
+  return nullptr;
+}
+Expr* Parser::ParseLiteralExpr() {
+  if (lexer_.Matches(lex::NUMBER) || lexer_.Matches(lex::STRING) ||
+      lexer_.Matches(lex::CHAR) || lexer_.Matches(lex::TRUE) ||
+      lexer_.Matches(lex::FALSE)) {
+    return new LiteralExpr(lexer_.GetPreviousToken());
+  }
+
+  // TODO handle EOF and INVALID
+  return nullptr;
+}
+Expr* Parser::ParseVarAccessExpr() {
+  if (lexer_.Matches(lex::IDENT)) {
+    return new VarAccessExpr(lexer_.GetPreviousToken());
+  }
+
+  // TODO handle EOF and INVALID
+  return nullptr;
 }
 
-///////////////////////////////////////////////////////////////////
-
-Expr* Parser::ParseIfExpr() {
-  std::abort();  // Your code goes here
+Expr* Parser::ParseKeywordExpr() {
+  if (Expr* ret = ParseReturnExpr()) {
+    return ret;
+  }
+  if (Expr* block = ParseBlockExpr()) {
+    return block;
+  }
+  if (Expr* if_expr = ParseIfExpr()) {
+    return if_expr;
+  }
+  return nullptr;
 }
 
-////////////////////////////////////////////////////////////////////
-
-Expr* Parser::ParseMatchExpr() {
-  std::abort();
+Expr* Parser::ParseReturnExpr() {
+  if (!lexer_.Matches(lex::RETURN)) {
+    return nullptr;
+  }
+  auto ret_pos = lexer_.GetPreviousToken().location;
+  Expr* returned = ParseExpr();
+  // TODO error?
+  lexer_.Matches(lex::SEMICOLON);  // skip ; if any
+  return new ReturnExpr(returned, ret_pos);
 }
-
-////////////////////////////////////////////////////////////////////
-
-Expr* Parser::ParseNewExpr() {
-  std::abort();
-}
-
-////////////////////////////////////////////////////////////////////
 
 Expr* Parser::ParseBlockExpr() {
-  std::abort();  // Your code goes here
+  if (!lexer_.Matches(lex::LEFT_BRACE)) {
+    return nullptr;
+  }
+  auto lbrace_pos = lexer_.GetPreviousToken().location;
+
+  std::vector<Stmt*> flow;
+  while (!lexer_.Matches(lex::RIGHT_BRACE)) {
+    Stmt* curr = ParseStmt();
+    if (Expr* end_expr = curr->As<Expr>()) {
+      lexer_.Advance();  // TODO ensure here is RIGHT_BRACE
+      return new BlockExpr(flow, end_expr, lbrace_pos);
+    }
+    flow.push_back(curr);
+  }
+
+  return new BlockExpr(flow, nullptr, lbrace_pos);
 }
 
-////////////////////////////////////////////////////////////////////
+Expr* Parser::ParseIfExpr() {
+  if (!lexer_.Matches(lex::IF)) {
+    return nullptr;
+  }
+  auto if_pos = lexer_.GetPreviousToken().location;
 
-Expr* Parser::ParseComparison() {
-  std::abort();  // Your code goes here
+  Stmt* var_decl = ParseStmt();
+  // TODO error?
+  Expr* cond = nullptr;
+  if (Expr* cond_parsed = var_decl->As<Expr>()) {
+    cond = cond_parsed;
+    var_decl = nullptr;
+  } else {
+    cond = ParseExpr();
+    // TODO error?
+  }
+
+  lexer_.Matches(lex::THEN);  // skip then if any
+  Expr* then_expr = ParseExpr();
+  // TODO error?
+
+  Expr* else_expr = nullptr;
+  if (lexer_.Matches(lex::ELSE)) {
+    else_expr = ParseExpr();
+    // TODO error?
+  }
+
+  return new IfExpr(var_decl ? var_decl->As<VarDecl>() : nullptr, cond,
+                    then_expr, else_expr, if_pos);
 }
-
-////////////////////////////////////////////////////////////////////
-
-Expr* Parser::ParseBinary() {
-  std::abort();  // Your code goes here
-}
-
-////////////////////////////////////////////////////////////////////
-
-Expr* Parser::ParseUnary() {
-  std::abort();  // Your code goes here
-}
-
-///////////////////////////////////////////////////////////////////
-
-// Assume lex::TokenType::ARROW has already been parsed
-Expr* Parser::ParseIndirectFieldAccess(Expr* expr) {
-}
-
-///////////////////////////////////////////////////////////////////
-
-Expr* Parser::ParseFieldAccess(Expr* expr) {
-}
-
-////////////////////////////////////////////////////////////////////
-
-Expr* Parser::ParseIndexingExpr(Expr* expr) {
-  std::abort();
-}
-
-////////////////////////////////////////////////////////////////////
-
-Expr* Parser::ParseFnCallExpr(Expr* expr, lex::Token id) {
-  std::abort();  // Your code goes here
-}
-
-////////////////////////////////////////////////////////////////////
-
-Expr* Parser::ParseFnCallUnnamed(Expr* expr) {
-  std::abort();
-}
-
-////////////////////////////////////////////////////////////////////
-
-Expr* Parser::ParsePostfixExprs() {
-  std::abort();  // Your code goes here
-}
-
-////////////////////////////////////////////////////////////////////
-
-Expr* Parser::ParsePrimary() {
-  // Try parsing grouping first
-
-  // > Your code goes here
-
-  // Then keyword expressions
-
-  // > Your code goes here
-
-  // Then all the base cases: IDENT, INT, TRUE, FALSE, ETC...
-
-  // > Your code goes here
-
-  FMT_ASSERT(false, "Unreachable!");
-}
-
-////////////////////////////////////////////////////////////////////
-
-// var t = {.field = 3, .bar = true,};
-Expr* Parser::ParseCompoundInitializer(lex::Token curly) {
-  std::abort();
-}
-
-// Short-hand notation: .<Tag> <Expr>
-// e.g: `.some 5` which is the same as `{ .some = 5 }`
-Expr* Parser::ParseSignleFieldCompound() {
-  std::abort();
-}
-
-////////////////////////////////////////////////////////////////////
-
-Expr* Parser::ParseReturnStmt() {
-  std::abort();
-}
-
-///////////////////////////////////////////////////////////////////
-
-Expr* Parser::ParseYieldStmt() {
-  std::abort();
-}
-
-///////////////////////////////////////////////////////////////////

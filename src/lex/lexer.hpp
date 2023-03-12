@@ -16,35 +16,21 @@ class Lexer {
   Lexer(std::istream& source);
 
   Token GetNextToken();
-
   void Advance();
-
-  Token Peek();
-
-  Token GetPreviousToken();
-
-  // Check current token type and maybe consume it.
   bool Matches(lex::TokenType type);
 
-  const std::vector<Error>& Errors() const;
-  size_t RecentErrorsCount() const;
+  Token Peek();
+  Token GetPreviousToken();
 
  private:
   void SkipWhitespace();
-
   void SkipComments();
 
-  ////////////////////////////////////////////////////////////////////
-
-  void AddError(const Location& loc, const std::string& message);
-
-  Token InvalidHere() {
-    return Token{TokenType::INVALID, "", scanner_.GetLocation()};
-  }
+  Token InvalidHere(Location token_pos, const std::string& error_msg);
 
   ////////////////////////////////////////////////////////////////////
 
-  Token MustMatchOperators();
+  Token MatchOperators();
 
   TokenType MustMatchOperator();
 
@@ -54,11 +40,11 @@ class Lexer {
 
   std::optional<Token> MatchLiterals();
 
-  Token MustMatchNumericLiteral();
+  Token MatchNumericLiteral();
 
-  Token MustMatchStringLiteral();
+  Token MatchStringLiteral();
 
-  Token MustMatchCharLiteral();
+  Token MatchCharLiteral();
 
   ////////////////////////////////////////////////////////////////////
 
@@ -67,14 +53,8 @@ class Lexer {
   ////////////////////////////////////////////////////////////////////
 
  private:
-  // For easy access to locations
   Token prev_{};
-
-  // Current token
   Token peek_{};
-
-  std::vector<Error> errors_;
-  size_t recent_errors_count_;
 
   Scanner scanner_;
   IdentTable table_;

@@ -5,6 +5,7 @@
 //////////////////////////////////////////////////////////////////////
 
 class Expr;
+class LvalueExpr;
 class EqualityExpr;
 class ComparisonExpr;
 class AdditiveExpr;

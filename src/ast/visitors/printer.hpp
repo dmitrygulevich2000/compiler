@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ast/declarations.hpp>
 #include <ast/expressions.hpp>
 #include <ast/visitors/visitor.hpp>
 
@@ -8,8 +9,7 @@
 
 class ConsolePrinter : public Visitor {
  public:
-  ConsolePrinter(std::ostream& out, size_t depth = 0)
-      : out(out), depth_(depth) {
+  ConsolePrinter(std::ostream& out) : out(out) {
   }
 
   // expressions
@@ -17,29 +17,34 @@ class ConsolePrinter : public Visitor {
     out << Prefix() << expr->op.type << std::endl;
     auto into = Into();  // RAII for ++depth_ :)
     expr->lhs->Accept(this);
+    Last();
     expr->rhs->Accept(this);
   };
   virtual void VisitComparisonExpr(ComparisonExpr* expr) {
     out << Prefix() << expr->op.type << std::endl;
     auto into = Into();
     expr->lhs->Accept(this);
+    Last();
     expr->rhs->Accept(this);
   };
   virtual void VisitAdditiveExpr(AdditiveExpr* expr) {
     out << Prefix() << expr->op.type << std::endl;
     auto into = Into();
     expr->lhs->Accept(this);
+    Last();
     expr->rhs->Accept(this);
   };
   virtual void VisitMultiplicativeExpr(MultiplicativeExpr* expr) {
     out << Prefix() << expr->op.type << std::endl;
     auto into = Into();
     expr->lhs->Accept(this);
+    Last();
     expr->rhs->Accept(this);
   };
   virtual void VisitUnaryExpr(UnaryExpr* expr) {
     out << Prefix() << expr->op.type << std::endl;
     auto into = Into();
+    Last();
     expr->operand->Accept(this);
   };
 
@@ -48,11 +53,15 @@ class ConsolePrinter : public Visitor {
 
     auto into1 = Into();
     expr->callable->Accept(this);
+    Last();
     out << Prefix() << "()" << std::endl;
 
     auto into2 = Into();
-    for (Expr* arg : expr->args) {
-      arg->Accept(this);
+    for (size_t i = 0; i < expr->args.size(); ++i) {
+      if (i == expr->args.size() - 1) {
+        Last();
+      }
+      expr->args[i]->Accept(this);
     }
   }
   virtual void VisitFieldAccessExpr(FieldAccessExpr* expr) {
@@ -61,7 +70,14 @@ class ConsolePrinter : public Visitor {
 
     expr->object->Accept(this);
     out << Prefix() << "." << std::endl;
-    out << Prefix() << expr->field.Value<std::string>() << std::endl;
+    Last();
+    if (expr->field.type == lex::IDENT) {
+      out << Prefix() << expr->field.Value<std::string>() << std::endl;
+    } else if (expr->field.type == lex::NUMBER) {
+      out << Prefix() << expr->field.Value<uint64_t>() << std::endl;
+    } else {
+      throw std::runtime_error("unexpected token type in field access");
+    }
   }
   virtual void VisitLiteralExpr(LiteralExpr* expr) {
     out << Prefix();
@@ -73,7 +89,7 @@ class ConsolePrinter : public Visitor {
         out << expr->lit.Value<uint64_t>();
         break;
       case lex::CHAR:
-        out << expr->lit.Value<char>();
+        out << "'" << expr->lit.Value<char>() << "'";
         break;
       case lex::TRUE:
         out << "true";
@@ -97,24 +113,33 @@ class ConsolePrinter : public Visitor {
       expr->decl->Accept(this);
     }
     expr->condition->Accept(this);
+    if (!expr->else_expr) {
+      Last();
+    }
     expr->then_expr->Accept(this);
     if (expr->else_expr) {
+      Last();
       expr->else_expr->Accept(this);
     }
   }
   virtual void VisitBlockExpr(BlockExpr* expr) {
     out << Prefix() << "{}" << std::endl;
     auto into = Into();
-    for (Stmt* elem : expr->flow) {
-      elem->Accept(this);
+    for (size_t i = 0; i < expr->flow.size(); ++i) {
+      if (i == expr->flow.size() - 1 && !expr->end_expr) {
+        Last();
+      }
+      expr->flow[i]->Accept(this);
     }
     if (expr->end_expr) {
+      Last();
       expr->end_expr->Accept(this);
     }
   }
   virtual void VisitReturnExpr(ReturnExpr* expr) {
     out << Prefix() << "return" << std::endl;
     auto into = Into();
+    Last();
     expr->returned->Accept(this);
   }
 
@@ -127,6 +152,7 @@ class ConsolePrinter : public Visitor {
     out << Prefix() << stmt->op.type << std::endl;
     auto into = Into();
     stmt->lhs->Accept(this);
+    Last();
     stmt->rhs->Accept(this);
   }
   virtual void VisitForStmt(ForStmt* stmt) {
@@ -138,10 +164,7 @@ class ConsolePrinter : public Visitor {
     out << Prefix() << "var" << std::endl;
     auto into = Into();
     out << Prefix() << decl->ident.Value<std::string>() << std::endl;
-    if (decl->type_name) {
-      out << Prefix() << decl->type_name.value().Value<std::string>()
-          << std::endl;
-    }
+    Last();
     decl->definition->Accept(this);
   }
   virtual void VisitFunDecl(FunDecl* decl) {
@@ -152,31 +175,52 @@ class ConsolePrinter : public Visitor {
     {
       out << Prefix() << "()" << std::endl;
       auto into = Into();
-      for (const lex::Token& arg : decl->args) {
-        out << Prefix() << arg.Value<std::string>() << std::endl;
+      for (size_t i = 0; i < decl->args.size(); ++i) {
+        if (i == decl->args.size() - 1) {
+          Last();
+        }
+        out << Prefix() << decl->args[i].Value<std::string>() << std::endl;
       }
     }
+    Last();
     decl->definition->Accept(this);
   }
 
  private:
   std::string Prefix() const {
-    std::string result(2 * depth_, ' ');
-    for (size_t i = 0; i < result.size(); i += 2) {
-      result[i] = '|';
-    }
-    if (!result.empty()) {
-      result.back() = '_';
-    }
-    return result;
+    //    std::string result(2 * depth_, ' ');
+    //    for (size_t i = 0; i < result.size(); i += 2) {
+    //      result[i] = '|';
+    //    }
+    //    if (!result.empty()) {
+    //      result.back() = '_';
+    //    }
+    //    return result;
+    return prefix_;
+  }
+  void Last() {
+    last_child_ = true;
   }
 
   struct HelperInto {
     HelperInto(ConsolePrinter* p) : p(p) {
       ++p->depth_;
+      if (!p->prefix_.empty()) {
+        p->prefix_.back() = ' ';
+        if (p->last_child_) {
+          p->prefix_[p->prefix_.size() - 2] = ' ';
+        }
+      }
+      p->prefix_ += "|_";
+      p->last_child_ = false;
     }
     ~HelperInto() {
       --p->depth_;
+      p->prefix_.resize(p->prefix_.size() - 2, ' ');
+      if (!p->prefix_.empty()) {
+        p->prefix_.back() = '_';
+      }
+      p->last_child_ = false;
     }
 
     ConsolePrinter* p;
@@ -186,5 +230,7 @@ class ConsolePrinter : public Visitor {
   }
 
   std::ostream& out;
-  size_t depth_;
+  size_t depth_ = 0;
+  std::string prefix_ = "";
+  bool last_child_ = false;
 };

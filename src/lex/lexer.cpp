@@ -10,13 +10,12 @@ Lexer::Lexer(std::istream& source) : scanner_{source} {
 
 Token Lexer::GetNextToken() {
   prev_ = peek_;
-  recent_errors_count_ = 0;
 
   SkipWhitespace();
   SkipComments();
 
   if (scanner_.Eof()) {
-    peek_ = {TokenType::TOKEN_EOF, "", scanner_.GetLocation()};
+    peek_ = {TokenType::TOKEN_EOF, "", scanner_.Pos()};
     return prev_;
   }
 
@@ -29,23 +28,13 @@ Token Lexer::GetNextToken() {
     return prev_;
   }
 
-  peek_ = MustMatchOperators();
+  peek_ = MatchOperators();
   return prev_;
 }
-
-////////////////////////////////////////////////////////////////////
-
-Token Lexer::GetPreviousToken() {
-  return prev_;
-}
-
-////////////////////////////////////////////////////////////////////
 
 void Lexer::Advance() {
   GetNextToken();
 }
-
-////////////////////////////////////////////////////////////////////
 
 bool Lexer::Matches(lex::TokenType target) {
   Token tok = Peek();
@@ -56,20 +45,12 @@ bool Lexer::Matches(lex::TokenType target) {
   return false;
 }
 
-////////////////////////////////////////////////////////////////////
-
 Token Lexer::Peek() {
   return peek_;
 }
 
-////////////////////////////////////////////////////////////////////
-
-const std::vector<Error>& Lexer::Errors() const {
-  return errors_;
-}
-
-size_t Lexer::RecentErrorsCount() const {
-  return recent_errors_count_;
+Token Lexer::GetPreviousToken() {
+  return prev_;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -87,13 +68,13 @@ bool IsAlphaNumeric(char ch) {
   return IsAlpha(ch) || IsNumeric(ch);
 }
 
+////////////////////////////////////////////////////////////////////
+
 void Lexer::SkipWhitespace() {
   while (IsWhitespace(scanner_.Peek())) {
     scanner_.GetSymbol();
   }
 }
-
-////////////////////////////////////////////////////////////////////
 
 void Lexer::SkipComments() {
   while (scanner_.Peek() == '#') {
@@ -102,24 +83,25 @@ void Lexer::SkipComments() {
   }
 }
 
-////////////////////////////////////////////////////////////////////
-
-void Lexer::AddError(const Location& loc, const std::string& message) {
-  errors_.emplace_back(loc, message);
-  ++recent_errors_count_;
+Token Lexer::InvalidHere(Location token_pos, const std::string& error_msg) {
+  return Token{INVALID, LexError(error_msg, scanner_.Pos()), token_pos};
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Token Lexer::MustMatchOperators() {
+Token Lexer::MatchOperators() {
   // Your code goes here
-  auto loc = scanner_.GetLocation();
-  return {MustMatchOperator(), "", loc};
+  auto loc = scanner_.Pos();
+  try {
+    TokenType type = MustMatchOperator();
+    return {type, "", loc};
+  } catch (LexError& err) {
+    return {INVALID, err, loc};
+  }
 }
 
 TokenType Lexer::MustMatchOperator() {
-  // Your code goes here
-  auto loc = scanner_.GetLocation();
+  auto loc = scanner_.Pos();
   char ch = scanner_.GetSymbol();
   switch (ch) {
     case '+':
@@ -133,7 +115,7 @@ TokenType Lexer::MustMatchOperator() {
     case '!':
       return MatchEQ(TokenType::NOT_EQ, TokenType::NOT);
     case '=':
-      return MatchEQ(TokenType::EQUALS, TokenType::ASSIGN);
+      return MatchEQ(TokenType::EQ, TokenType::ASSIGN);
     case '<':
       return TokenType::LT;
     case '>':
@@ -162,8 +144,7 @@ TokenType Lexer::MustMatchOperator() {
     case '|':
       return TokenType::PIPE;
     default:
-      AddError(loc, fmt::format("unexpected symbol {}", ch));
-      return TokenType::INVALID;
+      throw LexError(fmt::format("unexpected symbol {}", ch), loc);
   }
 }
 
@@ -179,17 +160,16 @@ TokenType Lexer::MatchEQ(TokenType matched, TokenType single) {
 ////////////////////////////////////////////////////////////////////
 
 std::optional<Token> Lexer::MatchLiterals() {
-  // Your code goes here
   char ch = scanner_.Peek();
 
   if (ch == '\'') {
-    return MustMatchCharLiteral();
+    return MatchCharLiteral();
 
   } else if (ch == '"') {
-    return MustMatchStringLiteral();
+    return MatchStringLiteral();
 
   } else if (IsNumeric(ch)) {
-    return MustMatchNumericLiteral();
+    return MatchNumericLiteral();
   }
 
   return {};
@@ -197,10 +177,10 @@ std::optional<Token> Lexer::MatchLiterals() {
 
 ////////////////////////////////////////////////////////////////////
 
-Token Lexer::MustMatchNumericLiteral() {
+Token Lexer::MatchNumericLiteral() {
   // Your code goes here
   std::string number;
-  auto loc = scanner_.GetLocation();
+  auto loc = scanner_.Pos();
 
   char ch = scanner_.Peek();
   while (!scanner_.Eof() && IsNumeric(ch)) {
@@ -209,61 +189,53 @@ Token Lexer::MustMatchNumericLiteral() {
   }
 
   if (number.empty()) {
-    AddError(loc, "not a number");
-    return InvalidHere();
+    return {INVALID, LexError{"not a number", scanner_.Pos()}};
   }
-  return {TokenType::NUMBER, number, loc};
+  uint64_t value = std::stoul(number);
+  return {TokenType::NUMBER, value, loc};
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Token Lexer::MustMatchCharLiteral() {
-  auto loc = scanner_.GetLocation();
+Token Lexer::MatchCharLiteral() {
+  auto loc = scanner_.Pos();
 
   if (!scanner_.Match('\'')) {  // skip left '
-    AddError(loc, "not a char literal");
-    return InvalidHere();
+    return InvalidHere(loc, "not a char literal");
   }
   if (scanner_.Eof()) {
-    AddError(loc, "unexpected EOF: trailing opening quote(')");
-    return InvalidHere();
+    return InvalidHere(loc, "unexpected EOF: missing closing quote(')");
   }
 
   char result = scanner_.GetSymbol();
   if (result == '\'') {
-    AddError(loc, "empty char literal");
-    return InvalidHere();
+    return {INVALID, LexError("empty char literal", loc), loc};
   }
 
   if (!scanner_.Match('\'')) {  // skip right '
-    AddError(loc, "missing closing quote(')");
-    return InvalidHere();
+    return InvalidHere(loc, "missing closing quote(')");
   }
   return {TokenType::CHAR, result, loc};
 }
 
 ////////////////////////////////////////////////////////////////////
 
-Token Lexer::MustMatchStringLiteral() {
-  // Your code goes here
+Token Lexer::MatchStringLiteral() {
   std::string str;
-  auto loc = scanner_.GetLocation();
+  auto loc = scanner_.Pos();
 
   if (!scanner_.Match('"')) {  // skip left "
-    AddError(loc, "not a string literal");
-    return InvalidHere();
+    return InvalidHere(loc, "not a string literal");
   }
   if (scanner_.Eof()) {
-    AddError(loc, "unexpected EOF: missing closing quotes(\")");
-    return InvalidHere();
+    return InvalidHere(loc, "unexpected EOF: missing closing quotes(\")");
   }
 
   char ch = scanner_.Peek();
   while (ch != '"') {
     str += scanner_.GetSymbol();
     if (scanner_.Eof()) {
-      AddError(loc, "unexpected EOF: missing closing quotes(\")");
-      return InvalidHere();
+      return InvalidHere(loc, "unexpected EOF: missing closing quotes(\")");
     }
 
     ch = scanner_.Peek();
@@ -276,9 +248,8 @@ Token Lexer::MustMatchStringLiteral() {
 ////////////////////////////////////////////////////////////////////
 
 std::optional<Token> Lexer::MatchWords() {
-  // Your code goes here
   std::string name;
-  auto loc = scanner_.GetLocation();
+  auto loc = scanner_.Pos();
 
   char ch = scanner_.Peek();
   if (!IsAlpha(ch)) {

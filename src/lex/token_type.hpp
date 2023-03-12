@@ -24,12 +24,15 @@ enum TokenType {
   MINUS,   // -
   STAR,    // *
   DIV,     // /
+  REM,     // %
   ASSIGN,  // =
-  EQUALS,  // ==
+  EQ,      // ==
   NOT_EQ,  // !=
   NOT,     // !
   LT,      // <
+  LEQ,     // <=
   GT,      // >
+  GEQ,     // >=
 
   // delimiters
   LEFT_PAREN,   // (
@@ -51,6 +54,7 @@ enum TokenType {
   FUN,      // fun
   VAR,      // var
   IF,       // if
+  THEN,     // then
   ELSE,     // else
   FOR,      // for
   RETURN,   // return

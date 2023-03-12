@@ -33,6 +33,7 @@ class IdentTable {
     map_["fun"] = TokenType::FUN;
     map_["var"] = TokenType::VAR;
     map_["if"] = TokenType::IF;
+    map_["then"] = TokenType::THEN;
     map_["else"] = TokenType::ELSE;
     map_["for"] = TokenType::FOR;
     map_["return"] = TokenType::RETURN;

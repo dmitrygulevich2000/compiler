@@ -1,15 +1,16 @@
 #pragma once
 
-#include <ast/syntax_tree.hpp>
+#include <ast/statements.hpp>
 
 #include <lex/token.hpp>
 
 #include <variant>
 #include <vector>
+#include "statements.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-class Expr : public TreeNode {
+class Expr : public Stmt {
  public:
   // Later
 
@@ -274,7 +275,7 @@ class IfExpr : public Expr {
 
 class BlockExpr : public Expr {
  public:
-  BlockExpr(std::vector<Stmt*> flow, Expr* end_expr,
+  BlockExpr(std::vector<Stmt*> flow, Expr* end_expr = nullptr,
             lex::Location lbrace_pos = {0, 0})
       : flow(std::move(flow)), end_expr(end_expr), lbrace_pos(lbrace_pos) {
   }

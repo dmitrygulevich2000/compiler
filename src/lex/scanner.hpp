@@ -24,6 +24,7 @@ class Scanner {
 
   char GetSymbol() {
     char result = static_cast<char>(source_.get());
+    source_.peek();  // unlock eof info
     if (result == '\n') {
       location_.NewLine();
     } else {
@@ -33,7 +34,7 @@ class Scanner {
   }
 
   bool Match(char ch) {
-    if (Eof() || Peek() != ch) {
+    if (Eof() || (Peek() != ch)) {
       return false;
     }
     GetSymbol();
@@ -52,7 +53,7 @@ class Scanner {
     return result;
   }
 
-  Location GetLocation() {
+  Location Pos() {
     return location_;
   }
 

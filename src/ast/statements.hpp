@@ -1,7 +1,6 @@
 #pragma once
 
-#include <ast/expressions.hpp>
-#include <ast/syntax_tree.hpp>
+#include <ast/tree_node.hpp>
 
 #include <lex/token.hpp>
 
@@ -22,9 +21,7 @@ class ExprStmt : public Stmt {
     return v->VisitExprStmt(this);
   }
 
-  lex::Location GetLocation() override {
-    return expr->GetLocation();
-  }
+  lex::Location GetLocation();
 
   Expr* expr;
 };

@@ -17,13 +17,6 @@ class Decl : public Stmt {
 
 class VarDecl : public Decl {
  public:
-  VarDecl(lex::Token ident, lex::Token type_name, Expr* definition,
-          lex::Location var_pos = {0, 0})
-      : ident(std::move(ident)),
-        type_name(std::move(type_name)),
-        definition(definition),
-        var_pos(var_pos) {
-  }
   VarDecl(lex::Token ident, Expr* definition, lex::Location var_pos = {0, 0})
       : ident(std::move(ident)), definition(definition), var_pos(var_pos) {
   }
@@ -41,8 +34,7 @@ class VarDecl : public Decl {
   }
 
   lex::Token ident;
-  // TODO maybe type is not always token
-  std::optional<lex::Token> type_name{};
+  // TODO support type?
   Expr* definition = nullptr;
   lex::Location var_pos;
 };
