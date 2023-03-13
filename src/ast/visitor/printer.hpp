@@ -2,7 +2,7 @@
 
 #include <ast/declarations.hpp>
 #include <ast/expressions.hpp>
-#include <ast/visitors/visitor.hpp>
+#include <ast/visitor/visitor.hpp>
 
 #include <ostream>
 #include <string>
@@ -188,14 +188,14 @@ class ConsolePrinter : public Visitor {
 
  private:
   std::string Prefix() const {
-    //    std::string result(2 * depth_, ' ');
-    //    for (size_t i = 0; i < result.size(); i += 2) {
-    //      result[i] = '|';
+    //    std::string result_(2 * depth_, ' ');
+    //    for (size_t i = 0; i < result_.size(); i += 2) {
+    //      result_[i] = '|';
     //    }
-    //    if (!result.empty()) {
-    //      result.back() = '_';
+    //    if (!result_.empty()) {
+    //      result_.back() = '_';
     //    }
-    //    return result;
+    //    return result_;
     return prefix_;
   }
   void Last() {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ast/tree_node.hpp>
-#include <ast/visitors/abort_visitor.hpp>
+#include <ast/visitor/abort_visitor.hpp>
 
 #include <fmt/core.h>
 

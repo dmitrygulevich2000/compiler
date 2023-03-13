@@ -13,3 +13,4 @@ target_link_libraries(test_parse PRIVATE Catch2::Catch2)
 
 add_executable(example_ast ast/example.cpp)
 add_executable(example_parse parse/example.cpp)
+add_executable(example_interpreter interpreter/example.cpp)

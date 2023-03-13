@@ -12,7 +12,7 @@ TEST_CASE("ExampleErrors", "[lex]") {
 
   tok = l.GetNextToken();
   CHECK(tok.type == lex::INVALID);
-  std::cerr << tok.Value<LexError>() << std::endl;
+  std::cerr << tok.Value<LexError>().what() << std::endl;
 
   CHECK(l.Matches(lex::TokenType::PLUS));
   CHECK(l.Matches(lex::TokenType::IDENT));
@@ -21,12 +21,12 @@ TEST_CASE("ExampleErrors", "[lex]") {
   CHECK(l.Matches(lex::TokenType::IDENT));
   tok = l.GetNextToken();
   CHECK(tok.type == lex::INVALID);
-  std::cerr << tok.Value<LexError>() << std::endl;
+  std::cerr << tok.Value<LexError>().what() << std::endl;
 
   CHECK(l.Matches(lex::TokenType::NUMBER));
   tok = l.GetNextToken();
   CHECK(tok.type == lex::INVALID);
-  std::cerr << tok.Value<LexError>() << std::endl;
+  std::cerr << tok.Value<LexError>().what() << std::endl;
 
   CHECK(l.Matches(lex::TokenType::TOKEN_EOF));
 }

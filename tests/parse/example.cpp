@@ -1,4 +1,4 @@
-#include <ast/visitors/printer.hpp>
+#include <ast/visitor/printer.hpp>
 #include <lex/lexer.hpp>
 #include <parse/parser.hpp>
 

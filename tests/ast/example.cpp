@@ -1,5 +1,5 @@
 #include <ast/ast.hpp>
-#include <ast/visitors/printer.hpp>
+#include <ast/visitor/printer.hpp>
 
 #include <iostream>
 

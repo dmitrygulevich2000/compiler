@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ast/visitors/visitor.hpp>
+#include <ast/visitor/visitor.hpp>
 
 #include <lex/location.hpp>
 
