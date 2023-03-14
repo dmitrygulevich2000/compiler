@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ast/visitors/visitor.hpp>
+#include <ast/visitor/visitor.hpp>
 
 #include <lex/location.hpp>
 
@@ -15,7 +15,7 @@ class TreeNode {
   virtual ~TreeNode() = default;
 
   template <typename T>
-  T* as() {
+  T* As() {
     return dynamic_cast<T*>(this);
   }
 };

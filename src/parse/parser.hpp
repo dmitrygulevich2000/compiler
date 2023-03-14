@@ -1,6 +1,7 @@
 #pragma once
 
-#include <ast/declarations.hpp>
+#include <ast/ast.hpp>
+#include <parse/error.hpp>
 
 #include <lex/lexer.hpp>
 
@@ -8,73 +9,59 @@ class Parser {
  public:
   Parser(lex::Lexer& l);
 
-  ///////////////////////////////////////////////////////////////////
+  Stmt* ParseStmt();
+  std::vector<Decl*> ParseAll();
 
-
-  ///////////////////////////////////////////////////////////////////
-
-  Statement* ParseStatement();
-
-  Statement* ParseExprStatement();
-  AssignmentStatement* ParseAssignment(LvalueExpression* target);
-
-  ////////////////////////////////////////////////////////////////////
-
-  Declaration* ParseDeclaration();
-
-  Declaration* ParsePrototype();
-  FunDeclStatement* ParseFunPrototype();
-  FunDeclStatement* ParseFunDeclStatement();
-  VarDeclStatement* ParseVarDeclStatement();
-  FunDeclStatement* ParseFunDeclarationStandalone();
-
-  ////////////////////////////////////////////////////////////////////
-
-  Expression* ParseExpression();
-
-  Expression* ParseKeywordExpresssion();
-
-  Expression* ParseReturnStatement();
-  Expression* ParseYieldStatement();
-  Expression* ParseIfExpression();
-  Expression* ParseMatchExpression();
-  Expression* ParseNewExpression();
-
-  Expression* ParseBlockExpression();
-
-  Expression* ParseComparison();
-  Expression* ParseBinary();
-
-  Expression* ParseUnary();
-  Expression* ParseDeref();
-  Expression* ParseAddressof();
-
-  // Precedence 1
-  Expression* ParsePostfixExpressions();
-  Expression* ParseFieldAccess(Expression* expr);
-  Expression* ParseIndirectFieldAccess(Expression* expr);
-  Expression* ParseIndexingExpression(Expression* expr);
-  Expression* ParseFnCallUnnamed(Expression* expr);
-  Expression* ParseFnCallExpression(Expression* expr, lex::Token id);
-
-  Expression* ParseCompoundInitializer(lex::Token id);
-  Expression* ParseSignleFieldCompound();
-  Expression* ParsePrimary();
-
-  ////////////////////////////////////////////////////////////////////
-
-  ////////////////////////////////////////////////////////////////////
+  const std::vector<SyntaxError>& Errors() {
+    return errors_;
+  }
 
  private:
-  std::string FormatLocation();
+  // expressions
+  Expr* ParseExpr();
+  Expr* ParseEqualityExpr();
+  Expr* ParseComparisonExpr();
+  Expr* ParseAdditiveExpr();
+  Expr* ParseMultiplicativeExpr();
+  Expr* ParseUnaryExpr();
 
-  auto ParseCSV() -> std::vector<Expression*>;
-  auto ParseFormals() -> std::vector<lex::Token>;
+  Expr* ParsePostfixExpr();
+  // embedded in ParsePostfixExpr
+  Expr* ParseFnCallExpr();
+  Expr* ParseFieldAccessExpr();
 
-  bool Matches(lex::TokenType type);
-  void Consume(lex::TokenType type);
-  bool MatchesComparisonSign(lex::TokenType type);
+  Expr* ParsePrimaryExpr();
+  Expr* ParseLiteralExpr();
+  Expr* ParseVarAccessExpr();
+
+  Expr* ParseKeywordExpr();
+  Expr* ParseReturnExpr();
+  Expr* ParseBlockExpr();
+  Expr* ParseIfExpr();
+
+  // statements
+  Stmt* ParseStmtOrThrow();
+  // embedded in ParseStmt
+  ExprStmt* ParseExprStmt();
+  AssignmentStmt* ParseAssignmentStmt();
+  Stmt* ParseForStmt();
+
+  // declarations
+  Decl* ParseDecl();
+  VarDecl* ParseVarDecl();
+  FunDecl* ParseFunDecl();
+
+  // helpers
+  std::vector<Expr*> ParseCSV();
+  std::vector<lex::Token> ParseParams();
 
  private:
+  void AddError(const ParseError& err);
+
+  // unlike Synchronize, stops if finds }
+  void SynchronizeBlock();
+  void Synchronize();
+
   lex::Lexer& lexer_;
+  std::vector<SyntaxError> errors_;
 };

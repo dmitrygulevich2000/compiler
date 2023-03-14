@@ -1,7 +1,6 @@
 #pragma once
 
-#include <ast/syntax_tree.hpp>
-#include <ast/expressions.hpp>
+#include <ast/tree_node.hpp>
 
 #include <lex/token.hpp>
 
@@ -9,46 +8,43 @@
 
 //////////////////////////////////////////////////////////////////////
 
-class Statement : public TreeNode {
+class Stmt : public TreeNode {};
+
+//////////////////////////////////////////////////////////////////////
+
+class ExprStmt : public Stmt {
  public:
-  virtual void Accept(Visitor* /* visitor */){};
+  explicit ExprStmt(Expr* expr) : expr(expr) {
+  }
+
+  void Accept(Visitor* v) override {
+    return v->VisitExprStmt(this);
+  }
+
+  lex::Location GetLocation();
+
+  Expr* expr;
 };
 
 //////////////////////////////////////////////////////////////////////
 
-class ExprStatement : public Statement {
+class AssignmentStmt : public Stmt {
  public:
-  ExprStatement(Expression* expr) : expr_{expr} {
+  AssignmentStmt(lex::Token op, LvalueExpr* lhs, Expr* rhs)
+      : op(std::move(op)), lhs(lhs), rhs(rhs) {
   }
 
-  virtual void Accept(Visitor*) override {
-    // visitor->VisitExprStatement(this);
-    std::abort();
+  void Accept(Visitor* v) override {
+    return v->VisitAssignmentStmt(this);
   }
 
-  virtual lex::Location GetLocation() override {
-    std::abort();
+  lex::Location GetLocation() override {
+    return op.location;
   }
 
-  Expression* expr_;
-};
-
-//////////////////////////////////////////////////////////////////////
-
-class AssignmentStatement : public Statement {
- public:
-  AssignmentStatement() {
-  }
-
-  virtual void Accept(Visitor*) override {
-    std::abort();
-  }
-
-  virtual lex::Location GetLocation() override {
-    std::abort();
-  }
-
-  // ???
+  lex::Token op;  // now only "="
+  LvalueExpr* lhs;
+  Expr* rhs;
 };
 
 //////////////////////////////////////////////////////////////////////

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.23)
-project(compilers-course)
+project(dgulevich-compiler)
 
 # --------------------------------------------------------------------
 
@@ -14,7 +14,14 @@ add_compile_options(-Wall -Wextra)
 # --------------------------------------------------------------------
 
 find_package(fmt REQUIRED)
-find_package(Catch2 2 REQUIRED)
+
+Include(FetchContent)
+FetchContent_Declare(
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v2.13.9
+)
+FetchContent_MakeAvailable(Catch2)
 
 # --------------------------------------------------------------------
 

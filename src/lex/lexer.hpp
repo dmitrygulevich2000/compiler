@@ -1,5 +1,6 @@
 #pragma once
 
+#include <lex/error.hpp>
 #include <lex/ident_table.hpp>
 #include <lex/token.hpp>
 
@@ -15,46 +16,44 @@ class Lexer {
   Lexer(std::istream& source);
 
   Token GetNextToken();
-
   void Advance();
+  bool Matches(lex::TokenType type);
 
   Token Peek();
-
   Token GetPreviousToken();
-
-  // Check current token type and maybe consume it.
-  bool Matches(lex::TokenType type);
 
  private:
   void SkipWhitespace();
-
   void SkipComments();
 
-  ////////////////////////////////////////////////////////////////////
-
-  std::optional<Token> MatchOperators();
-
-  std::optional<TokenType> MatchOperator();
+  Token InvalidHere(Location token_pos, const std::string& error_msg);
 
   ////////////////////////////////////////////////////////////////////
 
-  std::optional<Token> MatchLiterls();
+  Token MatchOperators();
 
-  std::optional<Token> MatchNumericLiteral();
+  TokenType MustMatchOperator();
 
-  std::optional<Token> MatchStringLiteral();
+  TokenType MatchEQ(TokenType matched, TokenType single);
 
-  std::optional<Token> MatchCharLiteral();
+  ////////////////////////////////////////////////////////////////////
+
+  std::optional<Token> MatchLiterals();
+
+  Token MatchNumericLiteral();
+
+  Token MatchStringLiteral();
+
+  Token MatchCharLiteral();
+
+  ////////////////////////////////////////////////////////////////////
 
   std::optional<Token> MatchWords();
 
   ////////////////////////////////////////////////////////////////////
 
  private:
-  // For easy access to locations
   Token prev_{};
-
-  // Current token
   Token peek_{};
 
   Scanner scanner_;

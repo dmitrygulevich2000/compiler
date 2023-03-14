@@ -1,181 +1,316 @@
 #pragma once
 
-#include <ast/syntax_tree.hpp>
+#include <ast/statements.hpp>
 
 #include <lex/token.hpp>
 
+#include <variant>
 #include <vector>
+#include "statements.hpp"
 
 //////////////////////////////////////////////////////////////////////
 
-class Expression : public TreeNode {
+class Expr : public Stmt {
  public:
-  virtual void Accept(Visitor*) = 0;
-
   // Later
 
   // virtual types::Type* GetType() = 0;
 };
 
+//// operations priority (from high to low):
+// https://en.cppreference.com/w/c/language/operator_precedence
+// . -> fn(call)
+// - !
+// * / %
+// + -
+// < <= > >=
+// == !=
+
+//// order of parsing expressions (operands of lower are higher (or exprs)):
+// ident constant (expr)
+// . -> fn(expr,)
+// ^
+// |                        return yield
+// |----------------------->if match
+// |                        {}-block
+// |
+// - !
+// * / %
+// + -
+// < <= > >=
+// == !=
+
 //////////////////////////////////////////////////////////////////////
 
 // Assignable entity
-
-class LvalueExpression : public Expression {};
+class LvalueExpr : public Expr {};
 
 //////////////////////////////////////////////////////////////////////
 
-class ComparisonExpression : public Expression {
+// == !=
+class EqualityExpr : public Expr {
  public:
-  // Constructor
+  EqualityExpr(lex::Token op, Expr* lhs, Expr* rhs)
+      : op(std::move(op)), lhs(lhs), rhs(rhs) {
+  }
 
-  virtual void Accept(Visitor* /*visitor*/) override {
-    std::abort();
+  virtual void Accept(Visitor* v) override {
+    return v->VisitEqualityExpr(this);
   }
 
   virtual lex::Location GetLocation() override {
-    std::abort();
+    return op.location;
   }
 
-  // TODO: fields, helpers, etc...
+  lex::Token op;
+  Expr* lhs;
+  Expr* rhs;
 };
 
 //////////////////////////////////////////////////////////////////////
 
-// Binary arithmetic: + - / *
-
-class BinaryExpression : public Expression {
+// < <= > >=
+class ComparisonExpr : public Expr {
  public:
-  // Constructor
+  ComparisonExpr(lex::Token op, Expr* lhs, Expr* rhs)
+      : op(std::move(op)), lhs(lhs), rhs(rhs) {
+  }
 
-  virtual void Accept(Visitor* /*visitor*/) override {
-    std::abort();
+  virtual void Accept(Visitor* v) override {
+    return v->VisitComparisonExpr(this);
   }
 
   virtual lex::Location GetLocation() override {
-    std::abort();
+    return op.location;
   }
 
-  // TODO: fields, helpers, etc...
+  lex::Token op;
+  Expr* lhs;
+  Expr* rhs;
 };
 
 //////////////////////////////////////////////////////////////////////
 
-class UnaryExpression : public Expression {
+// + -
+class AdditiveExpr : public Expr {
  public:
-  // Constructor
+  AdditiveExpr(lex::Token op, Expr* lhs, Expr* rhs)
+      : op(std::move(op)), lhs(lhs), rhs(rhs) {
+  }
 
-  virtual void Accept(Visitor* /*visitor*/) override {
-    std::abort();
+  virtual void Accept(Visitor* v) override {
+    return v->VisitAdditiveExpr(this);
   }
 
   virtual lex::Location GetLocation() override {
-    std::abort();
+    return op.location;
   }
 
-  // TODO: fields, helpers, etc...
+  lex::Token op;
+  Expr* lhs;
+  Expr* rhs;
 };
 
 //////////////////////////////////////////////////////////////////////
 
-class FnCallExpression : public Expression {
+// * / %
+class MultiplicativeExpr : public Expr {
  public:
-  // Constructor
+  MultiplicativeExpr(lex::Token op, Expr* lhs, Expr* rhs)
+      : op(std::move(op)), lhs(lhs), rhs(rhs) {
+  }
 
-  virtual void Accept(Visitor* /*visitor*/) override {
-    std::abort();
+  virtual void Accept(Visitor* v) override {
+    return v->VisitMultiplicativeExpr(this);
   }
 
   virtual lex::Location GetLocation() override {
-    std::abort();
+    return op.location;
   }
 
-  // TODO: fields, helpers, etc...
+  lex::Token op;
+  Expr* lhs;
+  Expr* rhs;
 };
 
 //////////////////////////////////////////////////////////////////////
 
-class BlockExpression : public Expression {
+// - !
+class UnaryExpr : public Expr {
  public:
-  // Constructor
+  UnaryExpr(lex::Token op, Expr* operand)
+      : op(std::move(op)), operand(operand) {
+  }
 
-  virtual void Accept(Visitor* /*visitor*/) override {
-    std::abort();
+  virtual void Accept(Visitor* v) override {
+    return v->VisitUnaryExpr(this);
   }
 
   virtual lex::Location GetLocation() override {
-    std::abort();
+    return op.location;
   }
 
-  // TODO: fields, helpers, etc...
+  lex::Token op;
+  Expr* operand;
 };
 
 //////////////////////////////////////////////////////////////////////
 
-class IfExpression : public Expression {
+// fn(call)
+class FnCallExpr : public LvalueExpr {
  public:
-  // Constructor
+  FnCallExpr(Expr* callable, const std::vector<Expr*>& args)
+      : callable(callable), args(args) {
+  }
 
-  virtual void Accept(Visitor* /*visitor*/) override {
-    std::abort();
+  virtual void Accept(Visitor* v) override {
+    return v->VisitFnCallExpr(this);
   }
 
   virtual lex::Location GetLocation() override {
-    std::abort();
+    return callable->GetLocation();
   }
 
-  // TODO: fields, helpers, etc...
+  Expr* callable;
+  std::vector<Expr*> args;
 };
 
 //////////////////////////////////////////////////////////////////////
 
-class LiteralExpression : public Expression {
+// id.fid
+class FieldAccessExpr : public LvalueExpr {
  public:
-  // Constructor
-
-  virtual void Accept(Visitor* /*visitor*/) override {
-    std::abort();
+  FieldAccessExpr(Expr* obj, lex::Token field,
+                  lex::Location dot_pos = lex::Location{})
+      : object(obj), field(std::move(field)), dot_pos(dot_pos) {
   }
 
-  virtual lex::Location GetLocation() override {
-    std::abort();
+  void Accept(Visitor* v) override {
+    return v->VisitFieldAccessExpr(this);
   }
 
-  // TODO: fields, helpers, etc...
+  lex::Location GetLocation() override {
+    return dot_pos;
+  }
+
+  Expr* object;
+  lex::Token field;
+  lex::Location dot_pos;
 };
 
 //////////////////////////////////////////////////////////////////////
 
-class VarAccessExpression : public LvalueExpression {
+// "abc" 'a' 123 true false
+class LiteralExpr : public Expr {
  public:
-  // Constructor
+  explicit LiteralExpr(lex::Token lit) : lit(std::move(lit)) {
+  }
 
-  virtual void Accept(Visitor* /*visitor*/) override {
-    std::abort();
+  virtual void Accept(Visitor* v) override {
+    return v->VisitLiteralExpr(this);
   }
 
   virtual lex::Location GetLocation() override {
-    std::abort();
+    return lit.location;
   }
 
-  // TODO: fields, helpers, etc...
+  lex::Token lit;
 };
 
 //////////////////////////////////////////////////////////////////////
 
-class ReturnExpression : public Expression {
+// i
+class VarAccessExpr : public LvalueExpr {
  public:
-  // Constructor
+  explicit VarAccessExpr(lex::Token ident) : ident(std::move(ident)) {
+  }
 
-  virtual void Accept(Visitor* /*visitor*/) override {
-    std::abort();
+  virtual void Accept(Visitor* v) override {
+    return v->VisitVarAccessExpr(this);
   }
 
   virtual lex::Location GetLocation() override {
-    std::abort();
+    return ident.location;
   }
 
-  // TODO: fields, helpers, etc...
+  lex::Token ident;
+};
+
+//////////////////////////////////////////////////////////////////////
+
+class IfExpr : public Expr {
+ public:
+  IfExpr(VarDecl* decl, Expr* condition, Expr* then_expr, Expr* else_expr,
+         lex::Location if_pos = {0, 0})
+      : decl(decl),
+        condition(condition),
+        then_expr(then_expr),
+        else_expr(else_expr),
+        if_pos(if_pos) {
+  }
+  IfExpr(Expr* condition, Expr* then_expr, Expr* else_expr,
+         lex::Location if_pos = {0, 0})
+      : condition(condition),
+        then_expr(then_expr),
+        else_expr(else_expr),
+        if_pos(if_pos) {
+  }
+
+  virtual void Accept(Visitor* v) override {
+    return v->VisitIfExpr(this);
+  }
+
+  virtual lex::Location GetLocation() override {
+    return if_pos;
+  }
+
+  VarDecl* decl = nullptr;
+  Expr* condition;
+  Expr* then_expr;
+  Expr* else_expr = nullptr;
+  lex::Location if_pos;
+};
+
+//////////////////////////////////////////////////////////////////////
+
+class BlockExpr : public Expr {
+ public:
+  BlockExpr(std::vector<Stmt*> flow, Expr* end_expr = nullptr,
+            lex::Location lbrace_pos = {0, 0})
+      : flow(std::move(flow)), end_expr(end_expr), lbrace_pos(lbrace_pos) {
+  }
+
+  virtual void Accept(Visitor* v) override {
+    return v->VisitBlockExpr(this);
+  }
+
+  virtual lex::Location GetLocation() override {
+    return lbrace_pos;
+  }
+
+  std::vector<Stmt*> flow;
+  Expr* end_expr = nullptr;
+  lex::Location lbrace_pos;
+};
+
+//////////////////////////////////////////////////////////////////////
+
+class ReturnExpr : public Expr {
+ public:
+  explicit ReturnExpr(Expr* returned, lex::Location ret_pos = {0, 0})
+      : returned(returned), ret_pos(ret_pos) {
+  }
+
+  virtual void Accept(Visitor* v) override {
+    return v->VisitReturnExpr(this);
+  }
+
+  virtual lex::Location GetLocation() override {
+    return ret_pos;
+  }
+
+  Expr* returned = nullptr;
+  lex::Location ret_pos;
 };
 
 //////////////////////////////////////////////////////////////////////
