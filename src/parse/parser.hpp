@@ -9,13 +9,12 @@ class Parser {
  public:
   Parser(lex::Lexer& l);
 
+  Stmt* ParseStmt();
   std::vector<Decl*> ParseAll();
 
   const std::vector<SyntaxError>& Errors() {
     return errors_;
   }
-
-  Stmt* ParseStmt();
 
  private:
   // expressions
@@ -41,6 +40,7 @@ class Parser {
   Expr* ParseIfExpr();
 
   // statements
+  Stmt* ParseStmtOrThrow();
   // embedded in ParseStmt
   ExprStmt* ParseExprStmt();
   AssignmentStmt* ParseAssignmentStmt();
@@ -56,6 +56,12 @@ class Parser {
   std::vector<lex::Token> ParseParams();
 
  private:
+  void AddError(const ParseError& err);
+
+  // unlike Synchronize, stops if finds }
+  void SynchronizeBlock();
+  void Synchronize();
+
   lex::Lexer& lexer_;
   std::vector<SyntaxError> errors_;
 };

@@ -4,8 +4,9 @@
 
 #include <sstream>
 
-void ParseAndPrint(std::istream& in) {
-  lex::Lexer lexer(in);
+void ParseAndPrint(const std::string& str) {
+  std::stringstream source(str);
+  lex::Lexer lexer(source);
 
   Parser parser(lexer);
   Stmt* tree = parser.ParseStmt();
@@ -15,8 +16,9 @@ void ParseAndPrint(std::istream& in) {
   assert(lexer.Matches(lex::TOKEN_EOF));
 }
 
-void ParseAllAndPrint(std::istream& in) {
-  lex::Lexer lexer(in);
+void ParseAllAndPrint(const std::string& str) {
+  std::stringstream source(str);
+  lex::Lexer lexer(source);
 
   Parser parser(lexer);
   auto decls = parser.ParseAll();
@@ -29,77 +31,78 @@ void ParseAllAndPrint(std::istream& in) {
 }
 
 void ExampleArithmetic() {
-  std::stringstream source(R"(3 - 2 - 1)");
-  ParseAndPrint(source);
-}
-
-void ExampleBigArithmetic() {
-  std::stringstream source(R"(
-(1 - 5 * vec.size()) / 2 > -99
-)");
-  ParseAndPrint(source);
+  std::cout << "------ arithmetic ----" << std::endl;
+  ParseAndPrint(R"(3 - 2 - 1)");
 }
 
 void ExampleVar() {
-  std::stringstream source(R"(
+  std::cout << "------ var decl ----" << std::endl;
+  ParseAndPrint(R"(
 var x = 0;
 )");
-  ParseAndPrint(source);
 }
 
 void ExampleFunc() {
-  std::stringstream source(R"(
+  std::cout << "------ fun decl ----" << std::endl;
+  ParseAndPrint(R"(
 fun main argc argv = 0;
 )");
-  ParseAndPrint(source);
 }
 
 void ExampleAssignment() {
-  std::stringstream source(R"(
+  std::cout << "------ assignment ----" << std::endl;
+  ParseAndPrint(R"(
 x = true;
 )");
-  ParseAndPrint(source);
 }
 
 void ExampleBlock() {
-  std::stringstream source(R"(
+  std::cout << "------ block expr ----" << std::endl;
+  ParseAndPrint(R"(
 {
   var x = 0;
   x = "mama";
   'i'
 }
 )");
-  ParseAndPrint(source);
 }
 
 void ExampleFieldAccess() {
-  std::stringstream source(R"(
+  std::cout << "------ field access ----" << std::endl;
+  ParseAndPrint(R"(
 (object + 1).comp_field.tuple_field.1
 )");
-  ParseAndPrint(source);
 }
 
 void ExampleFnCall() {
-  std::stringstream source(R"(
+  std::cout << "------ fun call ----" << std::endl;
+  ParseAndPrint(R"(
 sum(x, obj.y, 5 * 5);
 )");
-  ParseAndPrint(source);
+}
+
+void ExampleBigArithmetic() {
+  std::cout << "------ big arithmetic ----" << std::endl;
+  ParseAndPrint(R"(
+(1 - 5 * vec.size()) / 2 > -99
+)");
 }
 
 void ExampleComplex() {
-  std::stringstream source(R"(
+  std::cout << "------ if expr, etc ----" << std::endl;
+  ParseAndPrint(R"(
 fun IsCorrect answer = {
   if var true_ans = TheAnswerToLifeTheUniverseAndEverything(time.now()); answer == true_ans {
     return true;
   };
   false
-}
+};
 )");
-  ParseAndPrint(source);
 }
 
 void ExampleFile() {
-  std::stringstream source(R"(
+  std::cout << "------ ParseAll, comments ----" << std::endl;
+  ParseAllAndPrint(R"(
 # it's five
 var x = 5;
 
@@ -107,35 +110,24 @@ fun main argc argv = {
   printf("Hello, %s
 ", argv(1));
   # return 0
-}
+};
 
 
 var str = "boom";
 )");
-  ParseAllAndPrint(source);
 }
 
 int main() {
   ExampleArithmetic();
-  std::cout << "----------------" << std::endl;
-  ExampleBigArithmetic();
-
-  std::cout << "----------------" << std::endl;
   ExampleVar();
-  std::cout << "----------------" << std::endl;
   ExampleFunc();
-  std::cout << "----------------" << std::endl;
   ExampleAssignment();
-  std::cout << "----------------" << std::endl;
   ExampleBlock();
-  std::cout << "----------------" << std::endl;
   ExampleFieldAccess();
-  std::cout << "----------------" << std::endl;
   ExampleFnCall();
 
-  std::cout << "----------------" << std::endl;
+  ExampleBigArithmetic();
   ExampleComplex();
 
-  std::cout << "----------------" << std::endl;
   ExampleFile();
 }

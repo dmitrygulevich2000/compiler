@@ -309,7 +309,7 @@ class ReturnExpr : public Expr {
     return ret_pos;
   }
 
-  Expr* returned;
+  Expr* returned = nullptr;
   lex::Location ret_pos;
 };
 

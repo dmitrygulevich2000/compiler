@@ -213,7 +213,21 @@ class Interpreter : public Visitor {
   }
 
   void VisitIfExpr(IfExpr* expr) override {
-    throw std::runtime_error("unimplemented");
+    if (expr->decl) {
+      throw std::runtime_error("unsupported init decl in if");
+    }
+    auto cond = Visit(expr->condition);
+    if (cond.type.tag != TY_BOOL) {
+      throw RuntimeError("if condition has wrong type",
+                         expr->condition->GetLocation());
+    }
+    if (cond.As<bool>()) {
+      Visit(expr->then_expr);
+    } else if (expr->else_expr) {
+      Visit(expr->else_expr);
+    } else {
+      result_ = TypedValue{Type{TY_UNIT}};
+    }
   }
   void VisitBlockExpr(BlockExpr* expr) override {
     for (Stmt* stmt : expr->flow) {

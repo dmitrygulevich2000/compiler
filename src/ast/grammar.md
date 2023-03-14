@@ -68,7 +68,7 @@
 
 <fn-call-expression> ::= <postfix-expression> ( {<expression>,}* )
 
-<field-access-expression> ::= <postfix-expression> . IDENT(field)
+<field-access-expression> ::= <postfix-expression> . {IDENT(field) | NUMBER(tuple_pos)}
 
 // Primary
 <primary-expression> ::= <literal-expression>
@@ -93,7 +93,7 @@
 
 <block-expression> ::= { <statement>* <expression>? }
 
-<return-expression> ::= return <expression> ;?
+<return-expression> ::= return <expression>? ;
 
 ////////////////////////////////////////////////////////////////////////////////////
 ```

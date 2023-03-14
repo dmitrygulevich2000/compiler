@@ -46,7 +46,7 @@ void ExampleArithmetic() {
     ParseAndEval(source);
   }
   {
-    std::string expr = R"(--43)";
+    std::string expr = R"(2 - -2)";
     std::cout << ">>> " << expr << std::endl;
     std::stringstream source(expr);
     ParseAndEval(source);
@@ -86,7 +86,36 @@ void ExampleStmtBlock() {
   }
 }
 
+void ExampleIf() {
+  std::cout << "----- if expr ----------" << std::endl;
+  {
+    std::string expr = R"(if 5 + 5 == 10 {
+    -1
+} else "jackpot")";
+    std::cout << ">>> " << expr << std::endl;
+    std::stringstream source(expr);
+    ParseAndEval(source);
+  }
+  {
+    std::string expr = R"(if false then {
+    -1
+} else "jackpot")";
+    std::cout << ">>> " << expr << std::endl;
+    std::stringstream source(expr);
+    ParseAndEval(source);
+  }
+  {
+    std::string expr = R"(if 1 == 0 {
+    -1
+})";
+    std::cout << ">>> " << expr << std::endl;
+    std::stringstream source(expr);
+    ParseAndEval(source);
+  }
+}
+
 int main() {
   ExampleArithmetic();
   ExampleStmtBlock();
+  ExampleIf();
 }

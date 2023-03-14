@@ -138,6 +138,9 @@ class ConsolePrinter : public Visitor {
   }
   virtual void VisitReturnExpr(ReturnExpr* expr) {
     out << Prefix() << "return" << std::endl;
+    if (!expr->returned) {
+      return;
+    }
     auto into = Into();
     Last();
     expr->returned->Accept(this);

@@ -29,6 +29,9 @@ TEST_CASE("ExampleErrors", "[lex]") {
   std::cerr << tok.Value<LexError>().what() << std::endl;
 
   CHECK(l.Matches(lex::TokenType::TOKEN_EOF));
+  CHECK(l.GetPreviousToken().type == lex::TokenType::TOKEN_EOF);
+  CHECK(l.Peek().type == lex::TokenType::TOKEN_EOF);
+  // infinite stream of EOF
 }
 
 //////////////////////////////////////////////////////////////////////

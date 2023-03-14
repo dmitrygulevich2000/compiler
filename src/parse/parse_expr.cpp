@@ -2,7 +2,8 @@
 #include <parse/error.hpp>
 #include <parse/parser.hpp>
 
-// TODO handle INVALID tokens & EOF errors
+// TODO handle INVALID tokens & EOF errors?
+// maybe null result trigger error in all cases
 
 Expr* Parser::ParseExpr() {
   return ParseEqualityExpr();
@@ -10,12 +11,15 @@ Expr* Parser::ParseExpr() {
 
 Expr* Parser::ParseEqualityExpr() {
   Expr* lhs = ParseComparisonExpr();
+  if (!lhs) {
+    return nullptr;
+  }
 
   while (lexer_.Matches(lex::EQ) || lexer_.Matches(lex::NOT_EQ)) {
     lex::Token op = lexer_.GetPreviousToken();
     Expr* rhs = ParseComparisonExpr();
     if (!rhs) {
-      // TODO: error
+      throw ParseError(fmt::format("missing rhs of {}", op.type), op.location);
     }
     lhs = new EqualityExpr(op, lhs, rhs);
   }
@@ -24,13 +28,16 @@ Expr* Parser::ParseEqualityExpr() {
 }
 Expr* Parser::ParseComparisonExpr() {
   Expr* lhs = ParseAdditiveExpr();
+  if (!lhs) {
+    return nullptr;
+  }
 
   while (lexer_.Matches(lex::LT) || lexer_.Matches(lex::LEQ) ||
          lexer_.Matches(lex::GT) || lexer_.Matches(lex::GEQ)) {
     lex::Token op = lexer_.GetPreviousToken();
     Expr* rhs = ParseAdditiveExpr();
     if (!rhs) {
-      // TODO: error
+      throw ParseError(fmt::format("missing rhs of {}", op.type), op.location);
     }
     lhs = new ComparisonExpr(op, lhs, rhs);
   }
@@ -39,12 +46,15 @@ Expr* Parser::ParseComparisonExpr() {
 }
 Expr* Parser::ParseAdditiveExpr() {
   Expr* lhs = ParseMultiplicativeExpr();
+  if (!lhs) {
+    return nullptr;
+  }
 
   while (lexer_.Matches(lex::PLUS) || lexer_.Matches(lex::MINUS)) {
     lex::Token op = lexer_.GetPreviousToken();
     Expr* rhs = ParseMultiplicativeExpr();
     if (!rhs) {
-      // TODO: error
+      throw ParseError(fmt::format("missing rhs of {}", op.type), op.location);
     }
     lhs = new AdditiveExpr(op, lhs, rhs);
   }
@@ -53,13 +63,16 @@ Expr* Parser::ParseAdditiveExpr() {
 }
 Expr* Parser::ParseMultiplicativeExpr() {
   Expr* lhs = ParseUnaryExpr();
+  if (!lhs) {
+    return nullptr;
+  }
 
   while (lexer_.Matches(lex::STAR) || lexer_.Matches(lex::DIV) ||
          lexer_.Matches(lex::REM)) {
     lex::Token op = lexer_.GetPreviousToken();
     Expr* rhs = ParseUnaryExpr();
     if (!rhs) {
-      // TODO: error
+      throw ParseError(fmt::format("missing rhs of {}", op.type), op.location);
     }
     lhs = new MultiplicativeExpr(op, lhs, rhs);
   }
@@ -71,7 +84,8 @@ Expr* Parser::ParseUnaryExpr() {
     lex::Token op = lexer_.GetPreviousToken();
     Expr* operand = ParseUnaryExpr();
     if (!operand) {
-      // TODO: error
+      throw ParseError(fmt::format("missing operand of {}", op.type),
+                       op.location);
     }
     return new UnaryExpr(op, operand);
   }
@@ -89,18 +103,23 @@ Expr* Parser::ParseUnaryExpr() {
 
 Expr* Parser::ParsePostfixExpr() {
   Expr* prefix = ParsePrimaryExpr();
+  if (!prefix) {
+    return nullptr;
+  }
 
   while (lexer_.Matches(lex::LEFT_PAREN) || lexer_.Matches(lex::DOT)) {
     // ParseFnCallExpr
     if (lexer_.GetPreviousToken().type == lex::LEFT_PAREN) {
       auto args = ParseCSV();
-      // TODO error?
       prefix = new FnCallExpr(prefix, args);
     }
     // ParseFieldAccessExpr
     if (lexer_.GetPreviousToken().type == lex::DOT) {
       auto field = lexer_.GetNextToken();
-      // TODO ensure field is ident
+      if (field.type != lex::IDENT && field.type != lex::NUMBER) {
+        throw ParseError(fmt::format("couldn't access field {}", field.type),
+                         prefix->GetLocation());
+      }
       prefix = new FieldAccessExpr(prefix, field);
     }
   }
@@ -115,9 +134,14 @@ Expr* Parser::ParsePrimaryExpr() {
     return var;
   }
   if (lexer_.Matches(lex::LEFT_PAREN)) {
+    auto pos = lexer_.GetPreviousToken().location;
     Expr* expr = ParseExpr();
-    // TODO error?
-    lexer_.Advance();  // TODO ensure here is RIGHT_PAREN
+    if (!expr) {
+      throw ParseError("missing expr inside ()", pos);
+    }
+    if (!lexer_.Matches(lex::RIGHT_PAREN)) {
+      throw ParseError("missing closing )", lexer_.Peek().location);
+    }
     return expr;
   }
 
@@ -130,7 +154,8 @@ Expr* Parser::ParseLiteralExpr() {
     return new LiteralExpr(lexer_.GetPreviousToken());
   }
 
-  // TODO handle EOF and INVALID
+  if (lexer_.Matches(lex::TOKEN_EOF)) {
+  }
   return nullptr;
 }
 Expr* Parser::ParseVarAccessExpr() {
@@ -138,7 +163,6 @@ Expr* Parser::ParseVarAccessExpr() {
     return new VarAccessExpr(lexer_.GetPreviousToken());
   }
 
-  // TODO handle EOF and INVALID
   return nullptr;
 }
 
@@ -160,9 +184,16 @@ Expr* Parser::ParseReturnExpr() {
     return nullptr;
   }
   auto ret_pos = lexer_.GetPreviousToken().location;
+  if (lexer_.Matches(lex::SEMICOLON)) {
+    return new ReturnExpr(nullptr, ret_pos);
+  }
   Expr* returned = ParseExpr();
-  // TODO error?
-  lexer_.Matches(lex::SEMICOLON);  // skip ; if any
+  if (!returned) {
+    throw ParseError("missing return expression", ret_pos);
+  }
+  if (!lexer_.Matches(lex::SEMICOLON)) {
+    throw ParseError("missing ; after return", lexer_.Peek().location);
+  }
   return new ReturnExpr(returned, ret_pos);
 }
 
@@ -173,16 +204,32 @@ Expr* Parser::ParseBlockExpr() {
   auto lbrace_pos = lexer_.GetPreviousToken().location;
 
   std::vector<Stmt*> flow;
-  while (!lexer_.Matches(lex::RIGHT_BRACE)) {
-    Stmt* curr = ParseStmt();
-    if (Expr* end_expr = curr->As<Expr>()) {
-      lexer_.Advance();  // TODO ensure here is RIGHT_BRACE
-      return new BlockExpr(flow, end_expr, lbrace_pos);
+  Expr* end_expr = nullptr;
+  while (lexer_.Peek().type != lex::RIGHT_BRACE) {
+    Stmt* curr = nullptr;
+    try {
+      curr = ParseStmtOrThrow();
+    } catch (ParseError& err) {
+      SynchronizeBlock();
+      AddError(err);
+    }
+
+    if (!curr) {
+      if (lexer_.Peek().type == lex::TOKEN_EOF) {
+        break;
+      }
+      continue;
+    }
+    if ((end_expr = curr->As<Expr>())) {
+      break;
     }
     flow.push_back(curr);
   }
 
-  return new BlockExpr(flow, nullptr, lbrace_pos);
+  if (!lexer_.Matches(lex::RIGHT_BRACE)) {
+    throw ParseError("missing closing } after block", lexer_.Peek().location);
+  }
+  return new BlockExpr(flow, end_expr, lbrace_pos);
 }
 
 Expr* Parser::ParseIfExpr() {
@@ -191,25 +238,37 @@ Expr* Parser::ParseIfExpr() {
   }
   auto if_pos = lexer_.GetPreviousToken().location;
 
-  Stmt* var_decl = ParseStmt();
-  // TODO error?
+  Stmt* var_decl = ParseStmtOrThrow();
+  if (!var_decl) {
+    throw ParseError("missing statement after if", if_pos);
+  }
   Expr* cond = nullptr;
   if (Expr* cond_parsed = var_decl->As<Expr>()) {
     cond = cond_parsed;
     var_decl = nullptr;
   } else {
     cond = ParseExpr();
-    // TODO error?
+    if (!cond) {
+      throw ParseError("missing if condition", lexer_.Peek().location);
+    }
+    if (!var_decl->As<VarDecl>()) {
+      throw ParseError("if init stmt must declare variable",
+                       lexer_.Peek().location);
+    }
   }
 
   lexer_.Matches(lex::THEN);  // skip then if any
   Expr* then_expr = ParseExpr();
-  // TODO error?
+  if (!then_expr) {
+    throw ParseError("missing then expression", lexer_.Peek().location);
+  }
 
   Expr* else_expr = nullptr;
   if (lexer_.Matches(lex::ELSE)) {
     else_expr = ParseExpr();
-    // TODO error?
+    if (!else_expr) {
+      throw ParseError("missing else expression", lexer_.Peek().location);
+    }
   }
 
   return new IfExpr(var_decl ? var_decl->As<VarDecl>() : nullptr, cond,
